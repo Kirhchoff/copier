@@ -1,42 +1,7 @@
 #include <iostream>
-#include <array>
 #include <stdio.h>
 #include <chrono>
-
-const uint CHUNK_SIZE = 4*1024;
-
-struct Chunk {
-  // TODO: this could just be a handle to a location in shared buffer
-  using Unit_t = uint8_t;
-  constexpr static size_t UNIT_SIZE = sizeof(Unit_t);
-  std::array<Unit_t, CHUNK_SIZE> buffer;
-  size_t size {0};
-  bool last {false};
-};
-
-Chunk read_chunk(FILE* file, uint location) {
-  Chunk data;
-  //TODO: handle seek errors
-  fseek(file, location*CHUNK_SIZE, 0);
-  size_t result = fread(data.buffer.data(), Chunk::UNIT_SIZE, CHUNK_SIZE, file);
-  if(result == CHUNK_SIZE) {
-    std::cout << "Read whole buffer\n";
-  } else if(feof(file)) {
-    std::cout << "Read " << result << " util eof\n";
-  } else {
-    std::cout << "Error " << ferror(file);
-    //TODO: this terminates without closing files!
-    throw std::runtime_error("Error reading file");
-  }
-  data.size = result;
-  data.last = result != CHUNK_SIZE;
-  return data;
-}
-
-void write_chunk(FILE* file, Chunk& data) {
-  //TODO: handle write errors
-  fwrite(data.buffer.data(), Chunk::UNIT_SIZE, data.size, file);
-}
+#include <chunk.hpp>
 
 struct Arguments {
   std::string input_path {"random_file"};
@@ -78,15 +43,15 @@ int main(int argc, char* argv[]) {
   auto f_out = fopen(args.output_path.c_str(), "w");
   //TODO check if file empty
   for(auto location = 0u;; location++) {
-    auto c = read_chunk(f, location);
-    write_chunk(f_out, c);
+    auto c = copier::read_chunk(f, location);
+    copier::write_chunk(f_out, c);
     metrics.processed(c.size);
     if(c.last) break;
   }
   fclose(f);
   fclose(f_out);
   metrics.stop();
-  std::cout << metrics.tot_size << " " << metrics.tot_ms << '\n';
+  std::cout << "Copied " << metrics.tot_size << " bytes in " << metrics.tot_ms << " ms\n";
   return 0;
 }
 
