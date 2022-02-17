@@ -34,6 +34,7 @@ void read_loop(IntBuffer& buffer, FILE* f, std::atomic_bool& eof_reached) {
 void write_loop(IntBuffer& buffer, FILE* f, copier::Metrics& metrics, std::atomic_bool& eof_reached) {
     while(!eof_reached.load() || !buffer.empty()) {
         auto& c = buffer.read();
+        // TODO: error handling
         copier::write_chunk(f, c);
         metrics.processed(c.size);
         buffer.release();
@@ -44,6 +45,7 @@ int main(int argc, char* argv[]) {
     auto args = parse_args(argc, argv);
     std::cout << "Copying from " << args.input_path << " to " << args.output_path << '\n';
     copier::Metrics metrics{};
+    //TODO: ensure proper file closing. Use fstream instead?
     auto f = fopen(args.input_path.c_str(), "rb");
     auto f_out = fopen(args.output_path.c_str(), "wb");
     IntBuffer intermediate_buffer;
