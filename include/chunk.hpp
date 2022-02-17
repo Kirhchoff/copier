@@ -1,9 +1,11 @@
+#pragma once
+
 #include <cstdint>
 #include <stdio.h>
 #include <array>
 
 namespace copier {
-    const uint CHUNK_SIZE = 4*1024u;
+    const inline uint CHUNK_SIZE = 4*1024u;
 
     struct Chunk {
         using Unit_t = uint8_t;
@@ -19,5 +21,5 @@ namespace copier {
 
     Chunk read_chunk(FILE* file, uint location);
 
-    void write_chunk(FILE* file, Chunk& data);
+    void write_chunk(FILE* file, const Chunk& data);
 }

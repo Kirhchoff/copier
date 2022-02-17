@@ -18,7 +18,7 @@ namespace copier {
         return data;
     }
 
-    void write_chunk(FILE* file, Chunk& data) {
+    void write_chunk(FILE* file, const Chunk& data) {
         //TODO: handle write errors
         fwrite(data.buffer.data(), Chunk::UNIT_SIZE, data.size, file);
     }

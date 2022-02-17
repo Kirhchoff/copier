@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <chunk.hpp>
 #include <metrics.hpp>
+#include <circular_buffer.hpp>
 
 struct Arguments {
   std::string input_path {"random_file"};
@@ -21,17 +22,24 @@ int main(int argc, char* argv[]) {
   copier::Metrics metrics{};
   auto f = fopen(args.input_path.c_str(), "rb");
   auto f_out = fopen(args.output_path.c_str(), "wb");
+  //TODO: extract some function from this logic
+  copier::CircularBuffer<copier::Chunk, 100> intermediate_buffer;
   //TODO check if file empty
   for(auto location = 0u;; location++) {
-    auto c = copier::read_chunk(f, location);
+    //TODO: use read/write threads instead of flat loop
+    intermediate_buffer.write(copier::read_chunk(f, location));
+    auto& c = intermediate_buffer.read();
     copier::write_chunk(f_out, c);
     metrics.processed(c.size);
-    if(c.last) break;
+    if(c.last) {
+      break;
+    }
+    intermediate_buffer.release();
   }
   fclose(f);
   fclose(f_out);
   metrics.stop();
-  std::cout << "Copied " << metrics.total_size << " bytes in " << metrics.total_ms << " ms with average bandwidth " << metrics.bandwidth_MB() << " MB/s \n";
+  std::cout << "Copied " << metrics.total_size << " bytes in " << metrics.total_ms << " ms with average speed " << metrics.bandwidth_MB() << " MB/s \n";
   return 0;
 }
 

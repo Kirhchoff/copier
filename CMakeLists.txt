@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
+set(CMAKE_CXX_STANDARD 20)
 project(copier LANGUAGES CXX)
 
 add_library(copier_lib)
@@ -9,5 +10,5 @@ add_executable(copier main.cpp)
 target_link_libraries(copier PRIVATE copier_lib)
 
 find_package(Catch2 3 REQUIRED)
-add_executable(tests tests/chunk_tests.cpp)
+add_executable(tests tests/chunk_tests.cpp tests/circular_buffer_tests.cpp)
 target_link_libraries(tests PRIVATE Catch2::Catch2WithMain copier_lib)
