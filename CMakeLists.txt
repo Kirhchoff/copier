@@ -7,7 +7,7 @@ target_include_directories(copier_lib PUBLIC include)
 target_sources(copier_lib PRIVATE src/chunk.cpp src/metrics.cpp)
 
 add_executable(copier main.cpp)
-target_link_libraries(copier PRIVATE copier_lib)
+target_link_libraries(copier PRIVATE copier_lib pthread)
 
 find_package(Catch2 3 REQUIRED)
 add_executable(tests tests/chunk_tests.cpp tests/circular_buffer_tests.cpp)

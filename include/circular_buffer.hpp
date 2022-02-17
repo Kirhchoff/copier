@@ -54,6 +54,10 @@ namespace copier {
             data_changed.notify_all();
         }
 
+        bool empty() {
+            return free_space == SIZE;
+        }
+
     protected:
         std::array<DataPiece, SIZE> buffer;
         size_t read_pos {}; // position of next read
