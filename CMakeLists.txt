@@ -3,7 +3,7 @@ project(copier LANGUAGES CXX)
 
 add_library(copier_lib)
 target_include_directories(copier_lib PUBLIC include)
-target_sources(copier_lib PRIVATE src/chunk.cpp)
+target_sources(copier_lib PRIVATE src/chunk.cpp src/metrics.cpp)
 
 add_executable(copier main.cpp)
 target_link_libraries(copier PRIVATE copier_lib)

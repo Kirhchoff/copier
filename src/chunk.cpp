@@ -7,13 +7,10 @@ namespace copier {
         //TODO: handle seek errors
         fseek(file, location*CHUNK_SIZE, 0);
         size_t result = fread(data.buffer.data(), Chunk::UNIT_SIZE, CHUNK_SIZE, file);
-        if(result == CHUNK_SIZE) {
-            std::cout << "Read whole buffer\n";
-        } else if(feof(file)) {
-            std::cout << "Read " << result << " util eof\n";
-        } else {
+        if(ferror(file)) {
             std::cout << "Error " << ferror(file);
-            //TODO: this terminates without closing files!
+            //TODO: I don't like closing a file here. Neither do i like throwing an exception. Consider different error handling.
+            fclose(file);
             throw std::runtime_error("Error reading file");
         }
         data.size = result;
