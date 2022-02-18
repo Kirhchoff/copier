@@ -13,7 +13,7 @@ namespace copier{
     void Metrics::processed(unsigned int bytes) {
         total_size += bytes;
     }
-    double Metrics::bandwidth_MB() const {
+    double Metrics::rate_MBps() const {
         return total_size/total_ms * 1000 / 1048576;
     }
 }
