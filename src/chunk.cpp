@@ -22,4 +22,8 @@ namespace copier {
         //TODO: handle write errors
         fwrite(data.buffer.data(), Chunk::UNIT_SIZE, data.size, file);
     }
+
+    bool Chunk::operator==(const Chunk& other) const {
+        return buffer == other.buffer && size == other.size && last == other.last;
+    }
 }

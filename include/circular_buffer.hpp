@@ -5,56 +5,61 @@
 #include <iostream>
 
 namespace copier {
+    // TODO: brief description of the class
+    // TODO: Could it be made simpler by using std::deque with custom allocator / pmr?
+    // TODO: Does it work with size=1?
     template<class DataPiece, unsigned int SIZE>
     class CircularBuffer {
     public:
-        void write(const DataPiece data) {
+        const DataPiece& write(const DataPiece data) {
             std::unique_lock<std::mutex> lock(m);
+            // Make sure we don't overwrite data that haven't been read yet
             data_changed.wait(lock, [this, &data] {return free_space > 0;});
+            auto written_pos = write_pos;
+            // Write data and move next write position
             buffer[write_pos++] = data;
             if(write_pos == SIZE) {
                 write_pos = 0;
             }
-            if(write_pos == locked_pos) {
+            // Update free space
+            if(write_pos == read_pos) {
                 free_space = 0;
-            } else if (write_pos > locked_pos) {
-                free_space = SIZE - write_pos + locked_pos;
+            } else if (write_pos > read_pos) {
+                free_space = SIZE - write_pos + read_pos;
             } else {
-                free_space = locked_pos - write_pos;
+                free_space = read_pos - write_pos;
             }
             data_changed.notify_all();
+            return buffer[written_pos];
         }
 
-        const DataPiece& read() {
+        const DataPiece& peek() {
             std::unique_lock<std::mutex> lock(m);
+            // Make sure we are peeking actual data, not some garbage that was never written before
             data_changed.wait(lock, [this] {return read_pos != write_pos || free_space == 0;});
-            const DataPiece& retval = buffer[read_pos++];
+            return buffer[read_pos];
+        }
+
+        void pop() {
+            std::lock_guard<std::mutex> lock(m);
+            // Move next read position
+            read_pos++;
             if(read_pos == SIZE) {
                 read_pos = 0;
             }
-            if(read_pos == locked_pos) {
-                std::cout << "Whole buffer read without release or write!\n";
-                 // We need to wait for new data here, otherwise we would read the same data again.
-                data_changed.wait(lock, [this] {return read_pos != write_pos;});
-            }
-            data_changed.notify_all();
-            return retval;
-        }
-
-        void release() {
-            std::lock_guard<std::mutex> lock(m);
-            locked_pos = read_pos;
-            if(write_pos == locked_pos) {
+            // Update free space
+            // TODO: smells like code duplication
+            if(write_pos == read_pos) {
                 free_space = SIZE;
-            } else if (write_pos > locked_pos) {
-                free_space = SIZE - write_pos + locked_pos;
+            } else if (write_pos > read_pos) {
+                free_space = SIZE - write_pos + read_pos;
             } else {
-                free_space = locked_pos - write_pos;
+                free_space = read_pos - write_pos;
             }
             data_changed.notify_all();
         }
 
-        bool empty() {
+        bool is_empty() const {
             return free_space == SIZE;
         }
 
@@ -62,7 +67,6 @@ namespace copier {
         std::array<DataPiece, SIZE> buffer;
         size_t read_pos {}; // position of next read
         size_t write_pos {}; // position of next write
-        size_t locked_pos {}; // position "locked" by reader - the reference to data is still in use, so it cannot be overwritten
         size_t free_space {SIZE};
 
     private:

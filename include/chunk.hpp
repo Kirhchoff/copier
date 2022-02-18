@@ -17,6 +17,7 @@ namespace copier {
         bool last {false};
 
         //auto operator<=>(const Chunk&) const = default; // My compiler it too old :(
+        bool operator==(const Chunk& other) const;
     };
 
     Chunk read_chunk(FILE* file, uint location);

@@ -22,8 +22,7 @@ using IntBuffer = copier::CircularBuffer<copier::Chunk, 100>;
 
 void read_loop(IntBuffer& buffer, FILE* f, std::atomic_bool& eof_reached) {
     for(auto location = 0u;; location++) {
-        auto c = copier::read_chunk(f, location);
-        buffer.write(c);
+        const auto& c = buffer.write(copier::read_chunk(f, location));
         if(c.last) {
             eof_reached.store(true);
             return;
@@ -32,12 +31,12 @@ void read_loop(IntBuffer& buffer, FILE* f, std::atomic_bool& eof_reached) {
 }
 
 void write_loop(IntBuffer& buffer, FILE* f, copier::Metrics& metrics, std::atomic_bool& eof_reached) {
-    while(!eof_reached.load() || !buffer.empty()) {
-        auto& c = buffer.read();
+    while(!eof_reached.load() || !buffer.is_empty()) {
+        auto& c = buffer.peek();
         // TODO: error handling
         copier::write_chunk(f, c);
         metrics.processed(c.size);
-        buffer.release();
+        buffer.pop();
     }
 }
 

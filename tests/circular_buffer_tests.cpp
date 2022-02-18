@@ -9,11 +9,12 @@ public:
     using Sut::read_pos;
     using Sut::write_pos;
     using Sut::free_space;
-    using Sut::locked_pos;
 };
 
 TEST_CASE("Synch operations") {
     TestBuffer<copier::CircularBuffer<copier::Chunk, 3>> buf;
+
+    REQUIRE(buf.is_empty());
 
     SECTION("Writing one chunk") {
         copier::Chunk chunk{};
@@ -21,26 +22,25 @@ TEST_CASE("Synch operations") {
         buf.write(chunk);
         REQUIRE(buf.write_pos == 1);
         REQUIRE(buf.free_space == 2);
+        REQUIRE_FALSE(buf.is_empty());
         SECTION("Write full buffer") {
             copier::Chunk chunk2{}, chunk3{};
             buf.write(chunk2);
             buf.write(chunk3);
             REQUIRE(buf.write_pos == 0);
             REQUIRE(buf.read_pos == 0);
-            REQUIRE(buf.locked_pos == 0);
             REQUIRE(buf.free_space == 0);
 
             SECTION("Read chunk") {
-                auto c = buf.read();
+                auto c = buf.peek();
                 REQUIRE(buf.write_pos == 0);
-                REQUIRE(buf.read_pos == 1);
-                REQUIRE(buf.locked_pos == 0);
+                REQUIRE(buf.read_pos == 0);
                 REQUIRE(buf.free_space == 0);
-                REQUIRE(c.size == chunk.size);
+                REQUIRE(c == chunk);
 
                 SECTION("Release chunk") {
-                    buf.release();
-                    REQUIRE(buf.locked_pos == 1);
+                    buf.pop();
+                    REQUIRE(buf.read_pos == 1);
                     REQUIRE(buf.free_space == 1);
 
                     SECTION("Write another chunk") {
@@ -53,19 +53,20 @@ TEST_CASE("Synch operations") {
                 }
             }
             SECTION("Read multiple before release") {
-                auto c1 = buf.read();
-                auto c2 = buf.read();
-                REQUIRE(buf.read_pos == 2);
-                REQUIRE(buf.locked_pos == 0);
+                auto c1 = buf.peek();
+                auto c2 = buf.peek();
+                REQUIRE(buf.read_pos == 0);
+                REQUIRE(c1 == c2);
                 REQUIRE(buf.free_space == 0);
-                buf.release();
-                REQUIRE(buf.locked_pos == 2);
-                REQUIRE(buf.free_space == 2);
-                SECTION("Read last piece") {
-                    buf.read();
-                    buf.release();
+                buf.pop();
+                REQUIRE(buf.read_pos == 1);
+                REQUIRE(buf.free_space == 1);
+                SECTION("Pop last piece") {
+                    buf.pop();
+                    buf.pop();
                     REQUIRE(buf.read_pos == buf.write_pos);
                     REQUIRE(buf.free_space == 3);
+                    REQUIRE(buf.is_empty());
                 }
             }
         }

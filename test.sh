@@ -1,5 +1,7 @@
 #!/bin/bash
-g++ -std=c++2a main.cpp && ./a.out random_file output_file
+cd build && cmake .. && make -j3 && ./tests
+./copier ../random_file ../output_file
+cd ..
 if cmp -s "random_file" "output_file"; then
   printf "Files are the same."
 else
