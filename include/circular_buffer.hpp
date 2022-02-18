@@ -7,10 +7,10 @@
 namespace copier {
     // Thread safe FIFO circular buffer class with static storage size.
     // Provided mainly to avoid too much memory allocations compared to using some standard containers with dynamic size (like vector/queue)
-    // No constraints for size or data type stored are implementer. Use with care.
+    // No constraints for size or data type stored are implemented. Will allocate all the required memory up-fromt. Use with care.
+    // Not suitable for single-thread application. Requires separate reader and writer threads.
 
     // TODO: Could it be made simpler by using std::deque with custom allocator / pmr?
-    // TODO: Does it work with size=1?
     template<class DataPiece, unsigned int SIZE>
     class CircularBuffer {
     public:

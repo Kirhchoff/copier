@@ -14,21 +14,32 @@ Arguments parse_args(int argc, char* argv[]) {
     return retval;
 }
 
+// RAII for source and destination files
+struct FileHandler {
+    FileHandler(const std::string& path, const std::string&& mode) {
+        file = fopen(path.c_str(), mode.c_str());
+    }
+
+    ~FileHandler() {
+        fclose(file);
+    }
+
+    FILE* file;
+};
+
 int main(int argc, char* argv[]) {
     auto args = parse_args(argc, argv);
     std::cout << "Copying from " << args.input_path << " to " << args.output_path << '\n';
     app::App application{};
     copier::Metrics metrics{};
-    //TODO: ensure proper file closing. Use fstream instead?
-    auto src_f = fopen(args.input_path.c_str(), "rb");
-    auto dst_f = fopen(args.output_path.c_str(), "wb");
+    {
+        FileHandler src{args.input_path, "rb"};
+        FileHandler dst{args.output_path, "wb"};
+        application.run(src.file, dst.file, metrics);
+    }
 
-    application.run(src_f, dst_f, metrics);
-
-    fclose(src_f);
-    fclose(dst_f);
-    metrics.stop();
-    std::cout << "Copied " << metrics.total_size << " bytes in " << metrics.total_ms << " ms with average speed " << metrics.rate_MBps() << " MB/s \n";
+    auto rate = metrics.stop();
+    std::cout << "Copied " << metrics.total_size << " bytes in " << metrics.total_ms << " ms with average speed " << rate << " MB/s \n";
     return 0;
 }
 

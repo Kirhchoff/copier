@@ -17,7 +17,6 @@ void App::read_loop(FILE* src) {
 void App::write_loop(FILE* dst, copier::Metrics& metrics) {
     while(!eof_reached.load() || !buffer.is_empty()) {
         auto& c = buffer.peek();
-        // TODO: error handling
         copier::write_chunk(dst, c);
         metrics.processed(c.size);
         buffer.pop();

@@ -3,15 +3,14 @@
 
 namespace copier {
     Chunk read_chunk(FILE* file, uint location) {
-        Chunk data;
-        //TODO: handle seek errors
-        fseek(file, location*CHUNK_SIZE, 0);
+        Chunk data; 
+        if (fseek(file, location*CHUNK_SIZE, 0) != 0) {
+            throw std::runtime_error(std::string("Error trying to read a chunk: ") + std::to_string(ferror(file)));
+        }
         size_t result = fread(data.buffer.data(), Chunk::UNIT_SIZE, CHUNK_SIZE, file);
-        if(ferror(file)) {
-            std::cout << "Error " << ferror(file);
-            //TODO: I don't like closing a file here. Neither do i like throwing an exception. Consider different error handling.
-            fclose(file);
-            throw std::runtime_error("Error reading file");
+        if (ferror(file)) {
+            // TODO: we could try to recover by rewinding file pointer to previous location and retrying maybe?
+            throw std::runtime_error(std::string("Error reading a chunk: ") + std::to_string(ferror(file)));
         }
         data.size = result;
         data.last = result != CHUNK_SIZE;
@@ -19,8 +18,11 @@ namespace copier {
     }
 
     void write_chunk(FILE* file, const Chunk& data) {
-        //TODO: handle write errors
-        fwrite(data.buffer.data(), Chunk::UNIT_SIZE, data.size, file);
+        auto written = fwrite(data.buffer.data(), Chunk::UNIT_SIZE, data.size, file);
+        if (written != data.size) {
+            // TODO: we could try to recover by rewinding file pointer to previous location and retrying maybe?
+            throw std::runtime_error(std::string("Error writing a chunk: ") + std::to_string(ferror(file)));
+        }
     }
 
     bool Chunk::operator==(const Chunk& other) const {
