@@ -1,10 +1,10 @@
 #include <catch2/catch_test_macros.hpp>
 #include <chunk.hpp>
-#include <stdio.h>
 #include <numeric>
+#include <stdio.h>
 
 TEST_CASE("Chunk operations") {
-    std::FILE* tmp_file = std::tmpfile();
+    std::FILE *tmp_file = std::tmpfile();
 
     SECTION("Writing full chunk") {
         copier::Chunk full_chunk;
@@ -16,7 +16,7 @@ TEST_CASE("Chunk operations") {
         std::rewind(tmp_file);
         fread(buffer.data(), copier::Chunk::UNIT_SIZE, copier::CHUNK_SIZE, tmp_file);
         REQUIRE(buffer == full_chunk.buffer);
-        
+
         SECTION("Reading full chunk") {
             std::rewind(tmp_file);
             auto out_chunk = copier::read_chunk(tmp_file, 0);
@@ -37,7 +37,7 @@ TEST_CASE("Chunk operations") {
         std::array<uint8_t, TEST_CHUNK> buffer;
         std::rewind(tmp_file);
         fread(buffer.data(), copier::Chunk::UNIT_SIZE, TEST_CHUNK, tmp_file);
-        for(auto idx=0; idx<TEST_CHUNK; idx++){
+        for (auto idx = 0; idx < TEST_CHUNK; idx++) {
             REQUIRE(buffer[idx] == partial_chunk.buffer[idx]);
         }
         SECTION("Reading partial chunk") {
@@ -49,5 +49,5 @@ TEST_CASE("Chunk operations") {
         }
     }
 
-    fclose(tmp_file);    
+    fclose(tmp_file);
 }

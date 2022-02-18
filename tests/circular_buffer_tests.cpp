@@ -1,15 +1,14 @@
 
 #include <catch2/catch_test_macros.hpp>
-#include <circular_buffer.hpp>
 #include <chunk.hpp>
+#include <circular_buffer.hpp>
 
 // Test double to expose internal data of tested class. (It is difficult to test it as black-box.)
-template<class Sut>
-class TestBuffer : public Sut {
-public:
+template <class Sut> class TestBuffer : public Sut {
+  public:
+    using Sut::free_space;
     using Sut::read_pos;
     using Sut::write_pos;
-    using Sut::free_space;
 };
 
 constexpr int BUF_SIZE = 3;
@@ -84,5 +83,4 @@ TEST_CASE("Synch operations") {
             }
         }
     }
-
 }
